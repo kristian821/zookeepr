@@ -1,17 +1,18 @@
 const fs = require('fs');
 const path = require('path');
-const PORT = process.env.PORT || 3001;
 const express = require('express');
+const { animals } = require('./data/animals.json');
+
+const PORT = process.env.PORT || 3001;
 const app = express();
 
+app.use(express.static('public'));
 // parse incomimng string or array data
 app.use(express.urlencoded({ extended: true }));
 // parse incoming JSON data
 app.use(express.json());
 
-const { animals } = require('./data/animals.json');
-
-const filterByQuery = (query, animalsArray) => {
+function filterByQuery(query, animalsArray) {
     let personalityTraitsArray = [];
     // ?Note that ew save the animalsArray as filtered results here
     let filteredResults = animalsArray;
@@ -48,14 +49,14 @@ const filterByQuery = (query, animalsArray) => {
     }
     // Return the filtered results
     return filteredResults;
-};
+}
 
-const findById = (id, animalsArray) => {
+function findById(id, animalsArray) {
     const result = animalsArray.filter(animal => animal.id === id)[0];
     return result;
-};
+}
 
-const createNewAnimal = (body, animalsArray) => {
+function createNewAnimal(body, animalsArray) {
     const animal = body;
     animalsArray.push(animal);
     fs.writeFileSync(
@@ -63,9 +64,9 @@ const createNewAnimal = (body, animalsArray) => {
         JSON.stringify({ animals: animalsArray }, null, 2)
     );
     return animal;
-};
+}
 
-const validateAnimal = (animal) => {
+function validateAnimal(animal) {
     if (!animal.name || typeof animal.name !== 'string') {
         return false;
     }
@@ -95,8 +96,7 @@ app.get('/api/animals/:id', (req, res) => {
         res.json(result);
     } else {
         res.send(404);
-    }
-    
+    }  
 });
 
 app.post('/api/animals', (req, res) => {
@@ -110,6 +110,22 @@ app.post('/api/animals', (req, res) => {
         const animal = createNewAnimal(req.body, animals);
         res.json(animal);
     }
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/index.html'));
+});
+
+app.get('/animals', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/animals.html'));
+});
+
+app.get('/zookeepers', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/zookeepers.html'));
+});
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/index.html'));
 });
 
 app.listen(PORT, () => {
